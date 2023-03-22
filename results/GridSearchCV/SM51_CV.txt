@@ -1,0 +1,1 @@
+Kern: linear, Params: {'C': 1000000000.0, 'gamma': 1e-09}, score: 0.996078431372549

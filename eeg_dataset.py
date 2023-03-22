@@ -64,14 +64,14 @@ def get_target_labels_binary(labels):
     label_cats = np.unique(labels)
     target_labels = []
     category = {}
-    vow_cats = ['read', 'speak']
+    out_cats = ['read', 'speak']
     for label in label_cats:
         low_label = label.lower()
         if low_label == 'read':
             label_bin = low_label
         else:
             label_bin = 'speak'
-        category[label] = vow_cats.index(label_bin)
+        category[label] = out_cats.index(label_bin)
         target_labels.append(label)
     return target_labels, category
 
@@ -93,28 +93,28 @@ class EEGSubjectDataset(Dataset):
     def __init__(self, subject, train=True):
         device = get_device()
 
-        self.add_feats = True
+        self.add_feats = False
 
-        # base_dir = '/content/drive/MyDrive'
-        # base_dir = 'D:\\Research\\EEG-DIVA\\Feature_Selection_PCA'
-        base_dir = './data'
+        base_dir = '.\\data_comb_kpca'
+        label_dir = '.\\labels'
 
         if train:
             data_type = 'train'
         else:
             data_type = 'test'
 
-        orig_feat_set = np.load(f'{base_dir}\\{subject}_{data_type}_compressed.py')
-        f4_feat_set = np.load(f'{base_dir}\\{subject}_{data_type}_f4s.npy')
-        flat_f4 = f4_feat_set.flatten()
-        self.ext_feats = flat_f4
-        grad_feat_set = np.load(f'{base_dir}\\{subject}_{data_type}_f5s.npy')
-        self.ext_feats2 = grad_feat_set
+        orig_feat_set = np.load(f'{base_dir}\\{subject}_{data_type}_compressed.npy')
+
         if self.add_feats:
+            f4_feat_set = np.load(f'{base_dir}\\{subject}_{data_type}_f4s.npy')
+            flat_f4 = f4_feat_set.flatten()
+            self.ext_feats = flat_f4
+            grad_feat_set = np.load(f'{base_dir}\\{subject}_{data_type}_f5s.npy')
+            self.ext_feats2 = grad_feat_set
             self.data = np.hstack([orig_feat_set, grad_feat_set])
         else:
             self.data = orig_feat_set
-        self.labels = np.load(f'{base_dir}\\{subject}_{data_type}_labels.npy')
+        self.labels = np.load(f'{label_dir}\\{subject}_{data_type}_labels.npy')
         self.labels = [''.join(j).replace(" ", "") for j in self.labels]
         # print(self.labels)
         multiclass = False

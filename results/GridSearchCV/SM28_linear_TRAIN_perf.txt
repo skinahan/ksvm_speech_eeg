@@ -1,0 +1,1 @@
+The best parameters are {'C': 10000000000.0, 'gamma': 1e-09} with a score of 0.99

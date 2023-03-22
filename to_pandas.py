@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import os
 
+import weightedSHAP
 
 def load_data(path):
     """
@@ -70,9 +71,9 @@ def load_data(path):
 
 if __name__ == '__main__':
     # Create the pandas dataset
-    df = load_data('./data/')
+    #df = load_data('./data/')
     # Pickle it
-    df.to_pickle('./eeg_dataset.pkl')
+    #df.to_pickle('./eeg_dataset.pkl')
     # Load pickled pandas object from file
     df = pd.read_pickle('./eeg_dataset.pkl')
     print(df)
