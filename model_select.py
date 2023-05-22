@@ -21,8 +21,6 @@ from sklearn.linear_model import LogisticRegression
 
 sns.set_theme(style="darkgrid")
 
-c_POW = 3
-
 
 def train_test_split_helper(feat_type, subject):
     patho = False
@@ -45,6 +43,10 @@ def train_test_split_helper(feat_type, subject):
     X_train = np.array([x for x, y in train_dataset])
     X_test = np.array([x for x, y in test_dataset])
 
+    for idx, x_samp in enumerate(X_train):
+        if idx < len(X_test):
+            assert (not np.array_equal(x_samp, X_test[idx]))
+
     return X_train, X_test, train_labels, test_labels
 
 
@@ -65,7 +67,6 @@ def get_data(subj, scaleTransform):
     X3_train, X3_true_test, \
     train3_labels, test3_labels = train_test_split_helper(2, subj)
 
-    # normalize data
     if scaleTransform:
         scaler1 = preprocessing.StandardScaler()
         scaler2 = preprocessing.StandardScaler()
@@ -78,7 +79,10 @@ def get_data(subj, scaleTransform):
         X1_true_test = scaler1.transform(X1_true_test)
         X2_true_test = scaler2.transform(X2_true_test)
         X3_true_test = scaler3.transform(X3_true_test)
-    else:
+
+    norm = False
+    # normalize data
+    if norm:
         X_train1 = preprocessing.normalize(X1_train, axis=0)
         X_train2 = preprocessing.normalize(X2_train, axis=0)
         X_train3 = preprocessing.normalize(X3_train, axis=0)
@@ -120,30 +124,155 @@ def get_data(subj, scaleTransform):
     return (X_train, y_train), (X_test, y_test)
 
 
-# Implement nested cross-validation w/ FEATURE SELECTION within a single subject
-# Inspired by: https://machinelearningmastery.com/nested-cross-validation-for-machine-learning-with-python/
-def nested_CV_Intra_Subj2(subject, df, scaleTransform):
+# # def test_KPCA_Deg(subject, df):
+# #     X1_train, X1_test, \
+# #         train1_labels, test1_labels = train_test_split_helper(0, subject)
+# #
+# #     X2_train, X2_test, \
+# #         train2_labels, test2_labels = train_test_split_helper(1, subject)
+# #
+# #     X3_train, X3_test, \
+# #         train3_labels, test3_labels = train_test_split_helper(2, subject)
+# #
+# #     n_comps = np.linspace(20, 200, 10)
+# #     for k_choice in n_comps:
+# #         scaler1 = preprocessing.StandardScaler()
+# #         scaler2 = preprocessing.StandardScaler()
+# #         scaler3 = preprocessing.StandardScaler()
+# #
+# #         X_train1 = scaler1.fit_transform(X1_train)
+# #         X_train2 = scaler2.fit_transform(X2_train)
+# #         X_train3 = scaler3.fit_transform(X3_train)
+# #
+# #         X_test1 = scaler1.transform(X1_test)
+# #         X_test2 = scaler2.transform(X2_test)
+# #         X_test3 = scaler3.transform(X3_test)
+# #
+# #         kernel_pca1 = KernelPCA(
+# #             n_components=k_choice, kernel='poly'
+# #         )
+# #         kernel_pca2 = KernelPCA(
+# #             n_components=k_choice, kernel='poly'
+# #         )
+# #         kernel_pca3 = KernelPCA(
+# #             n_components=k_choice, kernel='poly'
+# #         )
+# #
+# #         X_train1 = kernel_pca1.fit_transform(X_train1)
+# #         X_train2 = kernel_pca2.fit_transform(X_train2)
+# #         X_train3 = kernel_pca3.fit_transform(X_train3)
+# #
+# #         components = kernel_pca1.
+# #
+#
+# # Implement nested cross-validation w/ FEATURE SELECTION within a single subject
+# # Inspired by: https://machinelearningmastery.com/nested-cross-validation-for-machine-learning-with-python/
+# def nested_CV_Intra_Subj2(subject, df, scaleTransform):
+#     # for each subject, there are three LARGE feature sets f0-f2
+#     X1_train, X1_test, \
+#     train1_labels, test1_labels = train_test_split_helper(0, subject)
+#
+#     X2_train, X2_test, \
+#     train2_labels, test2_labels = train_test_split_helper(1, subject)
+#
+#     X3_train, X3_test, \
+#     train3_labels, test3_labels = train_test_split_helper(2, subject)
+#
+#     assert train1_labels.dataset == train2_labels.dataset
+#     assert train2_labels.dataset == train3_labels.dataset
+#
+#     # configure the outer loop
+#     # cv_outer = KFold(n_splits=10, shuffle=True, random_state=1)
+#     cv_outer = KFold(n_splits=4, shuffle=True, random_state=1)
+#     # enumerate splits
+#     outer_results = list()
+#     outer_params = list()
+#
+#     outer_idx = 0
+#     global c_POW
+#     for train_ix, test_ix in cv_outer.split(X1_train):
+#         train_ix = train_ix.astype(dtype=int).tolist()
+#         test_ix = test_ix.astype(dtype=int).tolist()
+#
+#         y_train = torch.utils.data.Subset(train1_labels, train_ix)
+#         y_validate = torch.utils.data.Subset(train1_labels, test_ix)
+#
+#         # split data
+#         X_train1, X_valid1 = X1_train[train_ix, :], X1_train[test_ix, :]
+#         X_train2, X_valid2 = X2_train[train_ix, :], X2_train[test_ix, :]
+#         X_train3, X_valid3 = X3_train[train_ix, :], X3_train[test_ix, :]
+#
+#         X1 = X_train1, X_valid1, X1_test
+#         X2 = X_train2, X_valid2, X2_test
+#         X3 = X_train3, X_valid3, X3_test
+#         X_train, X_validate, X_test = normalize_combine_data(X1, X2, X3, scaleTransform)
+#
+#         # define search space
+#         lower_C = c_POW * -1
+#         upper_C = c_POW
+#         C_range = np.logspace(lower_C, upper_C, 16)
+#         gamma_range = np.logspace(lower_C, upper_C, 16)
+#
+#         # configure the inner loop
+#         param_grid = dict(gamma=gamma_range, C=C_range)
+#         cv_inner = KFold(n_splits=3, shuffle=True, random_state=1)
+#         # define the model
+#         model = SVC(kernel='rbf', class_weight='balanced')
+#         # define search
+#         search = GridSearchCV(model, param_grid=param_grid, scoring='accuracy', n_jobs=1, cv=cv_inner, refit=True)
+#
+#         # execute search
+#         result = search.fit(X_train, y_train)
+#         # get the best performing model
+#         best_model = result.best_estimator_
+#
+#         # evaluate model on held-out dataset
+#         yhat = best_model.predict(X_validate)
+#         # evaluate the model
+#         y_valid = [y_validate[i] for i, val in enumerate(y_validate)]
+#         acc = accuracy_score(y_valid, yhat)
+#         # store the result
+#         outer_results.append(acc)
+#         outer_params.append(result.best_params_)
+#         # report progress
+#         # print('>acc=%.3f, est=%.3f, cfg=%s' % (acc, result.best_score_, result.best_params_))
+#         outer_idx += 1
+#         # prepare row and append to the dataframe
+#         new_row = {'Subject': [subject],
+#                    'Accuracy': [acc],
+#                    'C': [result.best_params_['C']],
+#                    'gam': [result.best_params_['gamma']]}
+#         df2 = pd.DataFrame.from_dict(new_row)
+#         df = pd.concat([df, df2], sort=False)
+#     # summarize the estimated model performance
+#     print('Mean Valid. Accuracy: %.3f (%.3f)' % (np.mean(outer_results), np.std(outer_results)))
+#     return df
+
+
+def nested_CV_Intra_Subj3(subject, df, scaleTransform):
     # for each subject, there are three LARGE feature sets f0-f2
     X1_train, X1_test, \
-        train1_labels, test1_labels = train_test_split_helper(0, subject)
+    train1_labels, test1_labels = train_test_split_helper(0, subject)
 
     X2_train, X2_test, \
-        train2_labels, test2_labels = train_test_split_helper(1, subject)
+    train2_labels, test2_labels = train_test_split_helper(1, subject)
 
     X3_train, X3_test, \
-        train3_labels, test3_labels = train_test_split_helper(2, subject)
+    train3_labels, test3_labels = train_test_split_helper(2, subject)
 
     assert train1_labels.dataset == train2_labels.dataset
     assert train2_labels.dataset == train3_labels.dataset
 
     # configure the outer loop
-    cv_outer = KFold(n_splits=10, shuffle=True, random_state=1)
-    # cv_outer = KFold(n_splits=4, shuffle=True, random_state=1)
+    cv_outer = KFold(n_splits=4, shuffle=True, random_state=1)
+    # define search space
+    global c_POW
+    lower_C = c_POW * -1
+    upper_C = c_POW
+    C_range = np.logspace(lower_C, upper_C, 16)
+    gamma_range = np.logspace(lower_C, upper_C, 16)
     # enumerate splits
-    outer_results = list()
-    outer_params = list()
-
-    outer_idx = 0
+    fold_num = 1
     for train_ix, test_ix in cv_outer.split(X1_train):
         train_ix = train_ix.astype(dtype=int).tolist()
         test_ix = test_ix.astype(dtype=int).tolist()
@@ -161,52 +290,50 @@ def nested_CV_Intra_Subj2(subject, df, scaleTransform):
         X3 = X_train3, X_valid3, X3_test
         X_train, X_validate, X_test = normalize_combine_data(X1, X2, X3, scaleTransform)
 
-        # define search space
-        lower_C = c_POW * -1
-        upper_C = c_POW
-        C_range = np.logspace(lower_C, upper_C, 32)
-        gamma_range = np.logspace(lower_C, upper_C, 32)
-
-        # configure the inner loop
-        param_grid = dict(gamma=gamma_range, C=C_range)
-        cv_inner = KFold(n_splits=3, shuffle=True, random_state=1)
-        # define the model
-        model = SVC(kernel='rbf', class_weight='balanced')
-        # define search
-        search = GridSearchCV(model, param_grid=param_grid, scoring='accuracy', n_jobs=1, cv=cv_inner, refit=True)
-
-        # execute search
-        result = search.fit(X_train, y_train)
-        # get the best performing model
-        best_model = result.best_estimator_
-        # evaluate model on held-out dataset
-        yhat = best_model.predict(X_validate)
-        # evaluate the model
-        y_valid = [y_validate[i] for i, val in enumerate(y_validate)]
-        acc = accuracy_score(y_valid, yhat)
-        # store the result
-        outer_results.append(acc)
-        outer_params.append(result.best_params_)
-        # report progress
-        # print('>acc=%.3f, est=%.3f, cfg=%s' % (acc, result.best_score_, result.best_params_))
-        outer_idx += 1
-        # prepare row and append to the dataframe
-        new_row = {'Subject': [subject],
-                   'Accuracy': [acc],
-                   'C': [result.best_params_['C']],
-                   'gam': [result.best_params_['gamma']]}
-        df2 = pd.DataFrame.from_dict(new_row)
-        df = pd.concat([df, df2], sort=False)
-    # summarize the estimated model performance
-    print('Accuracy: %.3f (%.3f)' % (np.mean(outer_results), np.std(outer_results)))
-    return df
+        classifiers = []
+        for C in C_range:
+            for gamma in gamma_range:
+                # Create a model
+                clf = SVC(kernel='rbf', class_weight='balanced', C=C, gamma=gamma)
+                # Train the model
+                clf.fit(X_train, y_train)
+                # Evaluate the model
+                y_valid = [y_validate[i] for i, val in enumerate(y_validate)]
+                yhat = clf.predict(X_validate)
+                acc = accuracy_score(y_valid, yhat)
+                new_row = {'Subject': [subject],
+                           'Accuracy': [acc],
+                           'C': [C],
+                           'gam': [gamma],
+                           'fold': [fold_num]}
+                df2 = pd.DataFrame.from_dict(new_row)
+                df = pd.concat([df, df2], sort=False)
+        fold_num += 1
+    # calculate the average accuracy obtained for each pair of parameters C and gamma
+    # (across all the folds!)
+    unique_subjs = df['Subject'].unique()
+    df3 = pd.DataFrame()
+    for C in C_range:
+        for gamma in gamma_range:
+            # get the sum across all folds
+            subj_values = df.loc[(df['C'] == C) & (df['gam'] == gamma)]
+            avg_acc = np.mean(subj_values['Accuracy'].values)
+            print(avg_acc)
+            new_row2 = {'Subject': [subject],
+                        'Accuracy': [avg_acc],
+                        'C': [C],
+                        'gam': [gamma],
+                        'Accuracy_Type': ["Validation_Avg"]}
+            df4 = pd.DataFrame.from_dict(new_row2)
+            df3 = pd.concat([df3, df4], sort=False)
+    return df3
 
 
 def run_indiv_nestedCV(patho, scaleTransform):
     base_dir = 'D:\\Research\\EEG-DIVA\\Feature_Selection_PCA'
     index_file = f'{base_dir}\\C_index.json'
     pkl_name = f'./individual_nestedCV_results'
-
+    global c_POW
     if patho:
         index_file = f'{base_dir}\\S_index.json'
         pkl_name = f'{pkl_name}_patho_{c_POW}'
@@ -225,7 +352,8 @@ def run_indiv_nestedCV(patho, scaleTransform):
     for entry in index:
         subject = entry['Subject']
         print(f'Running NestedCV for: {subject}')
-        df = nested_CV_Intra_Subj2(subject, df, scaleTransform)
+        df2 = nested_CV_Intra_Subj3(subject, df, scaleTransform)
+        df = pd.concat([df, df2], sort=False)
     df.to_pickle(pkl_name)
 
 
@@ -399,7 +527,7 @@ def normalize_combine_data(X1, X2, X3, scaleTransform):
     X_train1, X_valid1, X_test1 = X1
     X_train2, X_valid2, X_test2 = X2
     X_train3, X_valid3, X_test3 = X3
-    # normalize data
+
     if scaleTransform:
         scaler1 = preprocessing.StandardScaler()
         scaler2 = preprocessing.StandardScaler()
@@ -409,14 +537,19 @@ def normalize_combine_data(X1, X2, X3, scaleTransform):
         X_train2 = scaler2.fit_transform(X_train2)
         X_train3 = scaler3.fit_transform(X_train3)
 
-        X_valid1 = scaler1.transform(X_valid1)
-        X_valid2 = scaler2.transform(X_valid2)
-        X_valid3 = scaler3.transform(X_valid3)
-
         X1_true_test = scaler1.transform(X_test1)
         X2_true_test = scaler2.transform(X_test2)
         X3_true_test = scaler3.transform(X_test3)
-    else:
+
+        # Note: Restore if norm before scale!
+        # X1_true_test = scaler1.transform(X1_true_test)
+        # X2_true_test = scaler2.transform(X2_true_test)
+        # X3_true_test = scaler3.transform(X3_true_test)
+
+    # normalize data
+    norm = False
+    # normalize data
+    if norm:
         X_train1 = preprocessing.normalize(X_train1, axis=0)
         X_train2 = preprocessing.normalize(X_train2, axis=0)
         X_train3 = preprocessing.normalize(X_train3, axis=0)
@@ -483,7 +616,7 @@ def variable_C_fixed_gamma(subject, df, scaleTransform):
 
     lower_C = c_POW * -1
     upper_C = c_POW
-    C_range = np.logspace(-3, 7, 32)
+    C_range = np.logspace(-3, 7, 16)
 
     outer_idx = 0
     for train_ix, test_ix in cv_outer.split(X1_train):
@@ -589,7 +722,7 @@ def variable_gamma_fixed_C(subject, df, scaleTransform):
 
         X_var = X_train.var()
         # def_gam = [(1.0 / (180 * X_var))]
-        gamma_range = np.logspace(-3, 7, 32)
+        gamma_range = np.logspace(-3, 7, 16)
         # gamma_range = np.append(gamma_range, def_gam)
 
         for gamm in gamma_range:
@@ -773,36 +906,23 @@ def get_avg_params(pkl_name):
 # plot 2D distribution of selected params across both groups
 def plot_params_2D(pkl_name):
     df = pd.read_pickle(pkl_name)
-    min_C = df['C'].min()
-    max_C = df['C'].max()
-    min_gam = df['gam'].min()
-    max_gam = df['gam'].max()
-    # get the unique subjects
-    unique_subjs = df['Subject'].unique()
-    # drop duplicates, specify Subject
-    subj_avgs = []
-    subj_Cs = []
-    subj_gams = []
-    for subj in unique_subjs:
-        subj_values = df.loc[df['Subject'] == subj]
-        avg = np.mean(subj_values['Accuracy'])
-        avg_C = np.mean(subj_values['C'])
-        avg_gam = np.mean(subj_values['gam'])
-        subj_avgs.append(avg)
-        subj_Cs.append(avg_C)
-        subj_gams.append(avg_gam)
-    # now, we have avg accuracy per-subject
-    data = {'Subject': unique_subjs,
-            'Accuracy': subj_avgs,
-            'C': subj_Cs,
-            'gamma': subj_gams}
-    df2 = pd.DataFrame(data)
-    df2 = df2.pivot("Subject", "C", "gamma")
-    # g1 = sns.heatmap(data=df2, annot=True, fmt=".1f")
-    g = sns.scatterplot(data=df, x="C", y="gam", hue="Subject_Type", style="Subject_Type", palette="dark")
+    filt = True
+    if filt:
+        # sort based on accuracy, gam, C
+        df = df.sort_values(by=['Accuracy', 'gam', 'C'], ascending=[False, True, True])
+        # drop duplicates, specify Subject
+        df = df.drop_duplicates('Subject', keep='first')
+        unique_subjs = df['Subject'].unique()
+    # min_C = df['C'].min()
+    # max_C = df['C'].max()
+    # min_gam = df['gam'].min()
+    # max_gam = df['gam'].max()
+    g = sns.relplot(data=df, x="C", y="gam", hue="Subject_Type", kind="scatter")
     title = f"Per-Subject Params Max-C: 10^{c_POW}"
-    g.fig.subplots_adjust(top=.95)
-    g.ax.set_title(title)
+    g.fig.subplots_adjust(top=.9)
+    g.fig.suptitle(title)
+    plt.yscale('log')
+    plt.xscale('log')
     plt.show()
 
 
@@ -834,6 +954,7 @@ def plot_valid_accuracy_vs_C(scaleTransform):
                     aspect=2.5)
     g.fig.subplots_adjust(top=.95)
     g.ax.set_title("Validation Accuracy")
+    plt.xscale('log')
     plt.show()
 
 
@@ -850,6 +971,7 @@ def plot_test_accuracy_vs_C(scaleTransform):
                     aspect=2.5)
     g.fig.subplots_adjust(top=.95)
     g.ax.set_title("Test Accuracy")
+    plt.xscale('log')
     plt.show()
 
 
@@ -867,6 +989,7 @@ def plot_valid_accuracy_vs_gamma(scaleTransform):
     title = "Validation Accuracy"
     g.fig.subplots_adjust(top=.95)
     g.ax.set_title(title)
+    plt.xscale('log')
     plt.show()
 
 
@@ -883,6 +1006,7 @@ def plot_test_accuracy_vs_gamma(scaleTransform):
                     aspect=2.5)
     g.fig.subplots_adjust(top=.95)
     g.ax.set_title("Test Accuracy")
+    plt.xscale('log')
     plt.show()
 
 
@@ -981,25 +1105,27 @@ def run_classification_all_groups_default_params(scaleTransform):
     run_indiv_defaultParams(scaleTransform, patho=False)
     run_indiv_defaultParams(scaleTransform, patho=True)
     combine_df_results_defaultParams(scaleTransform)
-    plot_indiv_and_group_test_acc(scaleTransform)
+
+
+def run_single_param_increasing(scaleTransform):
+    run_indiv_increasingC(False, scaleTransform)
+    run_indiv_increasingC(True, scaleTransform)
+    combine_df_results_increasingC(scaleTransform)
+    run_indiv_increasingGamma(False, scaleTransform)
+    run_indiv_increasingGamma(True, scaleTransform)
+    combine_df_results_increasingGamma(scaleTransform)
 
 
 def plot_single_param_increasing(scaleTransform):
     # Plot accuracy as a function of C parameter
-    run_indiv_increasingC(False, scaleTransform)
-    run_indiv_increasingC(True, scaleTransform)
-    combine_df_results_increasingC(scaleTransform)
     plot_valid_accuracy_vs_C(scaleTransform)
     plot_test_accuracy_vs_C(scaleTransform)
     # Plot accuracy as a function of gamma parameter
-    run_indiv_increasingGamma(False, scaleTransform)
-    run_indiv_increasingGamma(True, scaleTransform)
-    combine_df_results_increasingGamma(scaleTransform)
     plot_valid_accuracy_vs_gamma(scaleTransform)
     plot_test_accuracy_vs_gamma(scaleTransform)
 
 
-def plot_indiv_and_group_test_acc(scaleTransform=False):
+def plot_indiv_and_group_test_acc(scaleTransform=True):
     # plot average test accuracy for all with default params
     indiv_results_pkl = './individual_results_combined.pkl'
     if scaleTransform:
@@ -1033,14 +1159,23 @@ def plot_current_cPOW(scaleTransform):
     # plot_param_avgs(pkl_name)
 
 
-def hyp_tuning_and_validation(scaleTransform):
-    run_classification_all_groups_default_params(scaleTransform)
-    plot_single_param_increasing(scaleTransform)
-    c_pow_range = [3]
+def plot_cPOWs_only(scaleTransform):
+    c_pow_range = [1, 3, 5, 7]
     for c in c_pow_range:
+        global c_POW
         c_POW = c
-        run_nestedCV_all(scaleTransform)
-        test_evaluation(scaleTransform)
+        plot_current_cPOW(scaleTransform)
+
+
+# Test the best performing hyperparameters on the held-out set
+def hyp_validation(scaleTransform):
+    plot_indiv_and_group_test_acc(scaleTransform)
+    plot_single_param_increasing(scaleTransform)
+    c_pow_range = [1, 3, 5, 7]
+    for c in c_pow_range:
+        global c_POW
+        c_POW = c
+        # test_evaluation(scaleTransform)
         pkl_name = f'./hyperparam_testing_{c_POW}.pkl'
         if scaleTransform:
             pkl_name = f'./hyperparam_testing_{c_POW}_scaled.pkl'
@@ -1050,6 +1185,16 @@ def hyp_tuning_and_validation(scaleTransform):
         test_mean_significance(pkl_name, 'C')
         test_mean_significance(pkl_name, 'gam')
         plot_current_cPOW(scaleTransform)
+
+
+def hyp_tuning(scaleTransform):
+    # run_classification_all_groups_default_params(scaleTransform)
+    # run_single_param_increasing(scaleTransform)
+    c_pow_range = [1, 3, 5, 7]
+    for c in c_pow_range:
+        global c_POW
+        c_POW = c
+        run_nestedCV_all(scaleTransform)
 
 
 def test_evaluation(scaleTransform):
@@ -1097,7 +1242,6 @@ def logistic_regression(subj, df):
 
 
 def decision_boundary_tests():
-    # run_classification_all_groups_default_params(scaleTransform=False)
     # pkl_name = f'./individual_results_combined.pkl'
     # bar_chart(pkl_name, title='SVC Individual Accuracy')
     # group_avg_bar_chart(pkl_name, title='SVC Group Mean Accuracy')
@@ -1106,7 +1250,7 @@ def decision_boundary_tests():
     # bar_chart(pkl_name, title='SVC Individual Accuracy - Alternate Scaling')
     # group_avg_bar_chart(pkl_name, title='SVC Group Mean Accuracy - Alternate Scaling')
     subject = 'CF60'
-    visualize_decision_boundary(subject, scaleTransform=False)
+    visualize_decision_boundary(subject, scaleTransform=True)
     # scaleTransform = True
     # visualize_decision_boundary(subject, scaleTransform)
 
@@ -1123,8 +1267,12 @@ def log_regression_tests():
 
 # Note: scaleTransform=True!!
 if __name__ == '__main__':
-    scaleTransform = False
-    hyp_tuning_and_validation(scaleTransform)
+    global c_POW
+    c_POW = 1
+    scaleTransform = True
+    # hyp_tuning(scaleTransform)
+    hyp_validation(scaleTransform)
+
     # decision_boundary_tests()
     # log_regression_tests()
     # param_tuning_tests()
