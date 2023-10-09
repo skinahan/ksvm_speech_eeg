@@ -18,6 +18,10 @@ The EEG dataset used for this project was described in [Daliri & Max, 2018](http
    - conda activate your_env_name
 4. Run main.py using python
 
+- Analysis and plotting methods can be found in the data_analysis module. 
+- Experimental results (not raw data) can be found in the renamed_pkls directory.
+   - These files can be loaded and examined using the pandas package.
+
 # Questions
 
 Contact: skinahan {at} asu {dot} edu
