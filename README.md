@@ -6,7 +6,7 @@ Validation accuracy as a function of parameter C across five random splits of th
 ![Validation Accuracy Figure 1](https://github.com/skinahan/ksvm_speech_eeg/blob/main/results/figures/42_Validation%20Accuracy%20as%20F(C)%20with%20Gamma%200.005_3.png)
 
 Validation accuracy as a function of parameter γ across five random splits of the data into train and test sets. This plot uses the fixed value of C selected by the hyperparameter search. The mean accuracy and 95% CI are represented using the solid lines and shaded regions respectively.
-![Validation Accuracy Figure 2](https://github.com/skinahan/ksvm_speech_eeg/blob/main/results/figures/42_Test%20Accuracy%20as%20F(gamma)%20with%20C%201.0_3.png)
+![Validation Accuracy Figure 2](https://github.com/skinahan/ksvm_speech_eeg/blob/main/results/figures/42_Validation%20Accuracy%20as%20F(gamma)%20with%20C%201.0_3.png)
 
 # ksvm_speech_eeg
 
