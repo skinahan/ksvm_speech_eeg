@@ -53,6 +53,19 @@ def filter_and_combine(dataframes, threshold):
     return output_df
 
 
+def read_file_into_list(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+        return lines
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found.")
+        return []
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return []
+
+
 def run_proportion_tests():
     base_dir = 'D:\\Research\\EEG-DIVA\\Feature_Selection_PCA'
     index_file = f'{base_dir}\\C_index.json'
@@ -81,8 +94,8 @@ def run_proportion_tests():
     valid_threshold = 0.65
 
     non_patho_pvts = []
-
-    subjects_to_remove = ["CF60", "CM118", "SF14", "SM51"]
+    file_path = 'rm_subjs.txt'  # Replace with the path to your .txt file
+    subjects_to_remove = read_file_into_list(file_path)
 
     for entry in index:
         subject = entry['Subject']
