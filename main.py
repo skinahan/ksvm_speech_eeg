@@ -16,11 +16,11 @@ if __name__ == "__main__":
     trimmed_combined_name = f'./optimal_c_Increasing_Gamma_all_seeds_3_trimmed.pkl'
     plot_opt_c_increasing_Gamma(trimmed_combined_name)
 
-    run_sanity_checks(patho=False)
-    run_sanity_checks(patho=True)
-    remove_subjects()
-    run_proportion_tests()
-    plot_all_seeds()
+    # run_sanity_checks(patho=False)
+    # run_sanity_checks(patho=True)
+    # remove_subjects()
+    # run_proportion_tests()
+    # plot_all_seeds()
     c_pow_range = [1, 3, 5, 7]
     for c in c_pow_range:
         c_POW = c

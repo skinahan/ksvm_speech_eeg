@@ -17,6 +17,12 @@ def set_seed(sd):
 def get_seed():
     return seed
 
+def set_c_POW(cp):
+    global c_POW
+    c_POW = cp
+
+def get_c_POW():
+    return c_POW
 
 def train_test_split_helper(feat_type, subject):
     patho = False

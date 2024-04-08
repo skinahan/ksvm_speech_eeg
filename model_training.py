@@ -120,7 +120,7 @@ def nested_CV_Intra_Subj3(subject, df, scaleTransform):
     # configure the outer loop
     cv_outer = KFold(n_splits=4, shuffle=True, random_state=1)
     # define search space
-    global c_POW
+    c_POW = get_c_POW()
     lower_C = c_POW * -1
     upper_C = c_POW
     C_range = np.logspace(lower_C, upper_C, 32)

@@ -104,7 +104,71 @@ def update_column_in_dataframes(directory_path, column_name, replacement_dict):
 
 
 # Example usage:
-directory_path = './pkl_data'  # Replace with the path to your directory containing .pkl files
-column_name = 'Subject'  # Replace with the name of the column you want to update
+# directory_path = './pkl_data'  # Replace with the path to your directory containing .pkl files
+# column_name = 'Subject'  # Replace with the name of the column you want to update
+#
+# update_column_in_dataframes(directory_path, column_name, replacement_dict)
 
-update_column_in_dataframes(directory_path, column_name, replacement_dict)
+from PIL import Image
+import os
+import re
+
+
+def extract_subject_number(filename):
+    # Extract the numeric part of the filename
+    match = re.search(r'(\d+)', filename[2:])
+    if match:
+        return int(match.group(0))
+    return 0
+
+
+def merge_images(directory_path):
+    # Create a merged directory if it doesn't exist
+    merged_dir = os.path.join(directory_path, "merged")
+    os.makedirs(merged_dir, exist_ok=True)
+
+    # Collect files matching the naming convention
+    ans_files = []
+    aws_files = []
+
+    for filename in os.listdir(directory_path):
+        if filename.endswith(".png"):
+            if filename.startswith("42_ANS"):
+                ans_files.append(filename)
+            elif filename.startswith("42_AWS"):
+                aws_files.append(filename)
+
+    # Sort files based on the extracted numeric part
+    ans_files.sort(key=extract_subject_number)
+    aws_files.sort(key=extract_subject_number)
+
+    # Merge ANS images
+    for i in range(0, len(ans_files), 2):
+        image1 = Image.open(os.path.join(directory_path, ans_files[i]))
+        image2 = Image.open(os.path.join(directory_path, ans_files[i + 1] if i + 1 < len(ans_files) else ans_files[i]))
+        merged_image = Image.new('RGB', (image1.width + image2.width, image1.height), (255, 255, 255))
+        merged_image.paste(image1, (0, 0))
+        merged_image.paste(image2, (image1.width, 0))
+
+        # Set the DPI for the merged image to 300 DPI
+        merged_image.info['dpi'] = (300, 300)
+
+        merged_image.save(os.path.join(merged_dir, f"merged_{ans_files[i]}_{ans_files[i + 1]}"), dpi=(300, 300))
+
+    # Merge AWS images
+    for i in range(0, len(aws_files), 2):
+        image1 = Image.open(os.path.join(directory_path, aws_files[i]))
+        image2 = Image.open(os.path.join(directory_path, aws_files[i + 1] if i + 1 < len(aws_files) else aws_files[i]))
+        merged_image = Image.new('RGB', (image1.width + image2.width, image1.height), (255, 255, 255))
+        merged_image.paste(image1, (0, 0))
+        merged_image.paste(image2, (image1.width, 0))
+
+        # Set the DPI for the merged image to 300 DPI
+        merged_image.info['dpi'] = (300, 300)
+
+        merged_image.save(os.path.join(merged_dir, f"merged_{aws_files[i]}_{aws_files[i + 1]}"), dpi=(300, 300))
+
+
+if __name__ == "__main__":
+    directory_path = "results/figures/heatmaps"
+    merge_images(directory_path)

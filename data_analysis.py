@@ -25,6 +25,7 @@ def run_sanity_checks(patho):
     base_dir = 'D:\\Research\\EEG-DIVA\\Feature_Selection_PCA'
     index_file = f'{base_dir}\\C_index.json'
     global c_POW
+
     if patho:
         index_file = f'{base_dir}\\S_index.json'
 
@@ -1062,6 +1063,7 @@ def plot_param_heatmap(valid_df, title):
     g.set_title(title, fontsize=20)
     plt.subplots_adjust(bottom=0.25)
     plt.subplots_adjust(left=0.20)
+    plt.tight_layout()
     plt.savefig(f'./results/figures/heatmaps/{seed}_{title}_{c_POW}.png', dpi=300)
     plt.close()
     # plt.show()
@@ -1158,8 +1160,10 @@ def plot_C_slices(valid_df, title):
 def sanity_test(subject):
     global seed
     seed = 42
+    cp = 3
+    set_c_POW(cp)
     global c_POW
-    c_POW = 3
+    c_POW = get_c_POW()
     scaleTransform = True
 
     pub_subj = get_new_subject_name(subject)
